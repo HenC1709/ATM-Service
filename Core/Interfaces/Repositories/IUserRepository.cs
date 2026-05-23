@@ -6,7 +6,7 @@ namespace ATM2.Core.Interfaces.Repositories
     {
         User? GetById(string id);
         User? GetByEmail(string email);
-        List<User> GettAll();
+        List<User> GetAll();
         void Add(User user);
         void Update(User user);
         void Delete(string id);
