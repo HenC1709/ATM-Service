@@ -1,3 +1,10 @@
 bin/
 obj/
 .vs/
+.vscode/
+
+# Datos locales generados al ejecutar la app (usuarios, hashes, movimientos)
+Data/
+
+# Datos locales generados al ejecutar la app (usuarios, hashes, movimientos)
+Data/

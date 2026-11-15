@@ -1,8 +1,8 @@
 namespace ATM2.Core.Exceptions
 {
-    public class InvalidSessionException : Exception
+    public class InvalidSessionException : AtmException
     {
         public InvalidSessionException()
-            : base("Session is invalid or has expired") { }
+            : base("La sesión no es válida o ha expirado. Inicia sesión de nuevo.") { }
     }
 }

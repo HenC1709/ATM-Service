@@ -4,6 +4,9 @@ namespace ATM2.Core.Enums
     {
         Deposit,
         Withdrawal,
-        Transfer
+        TransferOut,
+        TransferIn,
+        DebtPayment,
+        CreditDisbursement
     }
 }

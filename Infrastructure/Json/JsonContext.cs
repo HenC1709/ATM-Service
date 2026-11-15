@@ -1,13 +1,19 @@
 namespace ATM2.Infrastructure.Json
 {
-    public class JsonContext
+    public static class JsonContext
     {
-        public static readonly string BasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Data");
+        /// <summary>
+        /// Carpeta donde se guardan los .json. Se usa el directorio de trabajo
+        /// (la raíz del proyecto al ejecutar "dotnet run" o desde VS Code),
+        /// así los datos no se pierden al limpiar bin/.
+        /// </summary>
+        public static readonly string BasePath = Path.Combine(Directory.GetCurrentDirectory(), "Data");
 
-        public static readonly string UsersFile = "users.json";
-        public static readonly string AccountsFile = "accounts.json";
-        public static readonly string TransactionsFile = "transactions.json";
-        public static readonly string CreditsFile = "credits.json";
-        public static readonly string TicketsFile = "tickets.json";
+        public const string UsersFile = "users.json";
+        public const string AccountsFile = "accounts.json";
+        public const string CardsFile = "cards.json";
+        public const string TransactionsFile = "transactions.json";
+        public const string CreditsFile = "credits.json";
+        public const string TicketsFile = "tickets.json";
     }
 }

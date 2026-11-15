@@ -1,8 +1,8 @@
 namespace ATM2.Core.Exceptions
 {
-    public class UserNotFoundException : Exception
+    public class UserNotFoundException : AtmException
     {
-        public UserNotFoundException(string userId)
-            : base($"User with id '{userId}' was not found") { }
+        public UserNotFoundException(string identifier)
+            : base($"No se encontró el usuario '{identifier}'.") { }
     }
 }

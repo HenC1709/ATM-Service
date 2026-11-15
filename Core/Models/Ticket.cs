@@ -1,8 +1,9 @@
 using ATM2.Core.Enums;
+using ATM2.Core.Interfaces;
 
 namespace ATM2.Core.Models
 {
-    public class Ticket
+    public class Ticket : IEntity
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string UserId { get; set; } = string.Empty;
