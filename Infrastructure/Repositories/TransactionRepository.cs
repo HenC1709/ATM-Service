@@ -4,29 +4,15 @@ using ATM2.Infrastructure.Json;
 
 namespace ATM2.Infrastructure.Repositories
 {
-    public class TransactionRepository : ITransactionRepository
+    public class TransactionRepository : JsonRepository<Transaction>, ITransactionRepository
     {
-        private readonly JsonService _jsonService;
-
         public TransactionRepository(JsonService jsonService)
-        {
-            _jsonService = jsonService;
-        }
-
-        public Transaction? GetById(string id) =>
-            GetAll().FirstOrDefault(t => t.Id == id);
+            : base(jsonService, JsonContext.TransactionsFile) { }
 
         public List<Transaction> GetByAccountId(string accountId) =>
             GetAll().Where(t => t.AccountId == accountId).ToList();
 
-        public List<Transaction> GetAll() =>
-            _jsonService.ReadALL<Transaction>(JsonContext.TransactionsFile);
-
-        public void Add(Transaction transaction)
-        {
-            var transactions = GetAll();
-            transactions.Add(transaction);
-            _jsonService.WriteAll(JsonContext.TransactionsFile, transactions);
-        }
+        public List<Transaction> GetByUserId(string userId) =>
+            GetAll().Where(t => t.UserId == userId).ToList();
     }
 }

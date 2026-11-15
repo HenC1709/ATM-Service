@@ -7,7 +7,6 @@ namespace ATM2.Core.Interfaces.Services
         User? GetById(string id);
         User? GetByEmail(string email);
         List<User> GetAll();
-        void Create(User user);
         void Update(User user);
         void Lock(string userId);
         void Unlock(string userId);

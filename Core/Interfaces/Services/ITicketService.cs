@@ -8,7 +8,7 @@ namespace ATM2.Core.Interfaces.Services
         Ticket? GetById(string id);
         List<Ticket> GetByUserId(string userId);
         List<Ticket> GetAll();
-        void Create(Ticket ticket);
+        Ticket Create(string userId, string subject, string description);
         void UpdateStatus(string ticketId, TicketStatus status);
     }
 }

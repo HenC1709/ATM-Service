@@ -1,10 +1,8 @@
-using ATM2.Core.Models;
-
 namespace ATM2.Core.Exceptions
 {
-    public class AccountLockedException : Exception
+    public class AccountLockedException : AtmException
     {
-        public AccountLockedException(string userId)
-            : base($"Account for user '{userId}' is locked") { }
+        public AccountLockedException()
+            : base("Tu usuario está bloqueado por demasiados intentos fallidos. Contacta a un administrador.") { }
     }
 }

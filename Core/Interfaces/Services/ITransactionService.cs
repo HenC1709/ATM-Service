@@ -6,6 +6,8 @@ namespace ATM2.Core.Interfaces.Services
     {
         Transaction? GetById(string id);
         List<Transaction> GetByAccountId(string accountId);
+        List<Transaction> GetByUserId(string userId);
+        List<Transaction> GetAll();
         void Register(Transaction transaction);
     }
 }
