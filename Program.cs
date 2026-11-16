@@ -1,46 +1,56 @@
 using System.Text;
 using ATM2.Application;
 using ATM2.Application.Services;
+using ATM2.Core.Interfaces.Repositories;
+using ATM2.Core.Interfaces.Security;
+using ATM2.Core.Interfaces.Services;
 using ATM2.Infrastructure.Json;
 using ATM2.Infrastructure.Repositories;
 using ATM2.Infrastructure.Security;
 using ATM2.Infrastructure.Seed;
 using ATM2.UI;
 using ATM2.UI.Menus;
+using Microsoft.Extensions.DependencyInjection;
 
 Console.OutputEncoding = Encoding.UTF8;
 if (!Console.IsInputRedirected) Console.InputEncoding = Encoding.UTF8;
 
 try
 {
-    // --- Infraestructura (persistencia en JSON) ---
-    var jsonService = new JsonService(JsonContext.BasePath);
-    var userRepository = new UserRepository(jsonService);
-    var accountRepository = new AccountRepository(jsonService);
-    var cardRepository = new CardRepository(jsonService);
-    var transactionRepository = new TransactionRepository(jsonService);
-    var creditRepository = new CreditRepository(jsonService);
-    var ticketRepository = new TicketRepository(jsonService);
-    var hasher = new PasswordHasher();
+    var collection = new ServiceCollection();
+
+    // --- Infraestructura (persistencia en JSON y seguridad) ---
+    collection.AddSingleton(new JsonService(JsonContext.BasePath));
+    collection.AddSingleton<IPasswordHasher, PasswordHasher>();
+    collection.AddSingleton<IUserRepository, UserRepository>();
+    collection.AddSingleton<IAccountRepository, AccountRepository>();
+    collection.AddSingleton<ICardRepository, CardRepository>();
+    collection.AddSingleton<ITransactionRepository, TransactionRepository>();
+    collection.AddSingleton<ICreditRepository, CreditRepository>();
+    collection.AddSingleton<ITicketRepository, TicketRepository>();
 
     // --- Servicios (lógica de negocio) ---
-    var sessionService = new SessionService();
-    var transactionService = new TransactionService(transactionRepository);
-    var accountService = new AccountService(accountRepository, transactionService);
-    var services = new AppServices(
-        Auth: new AuthService(userRepository, accountService, sessionService, hasher),
-        Sessions: sessionService,
-        Users: new UserService(userRepository),
-        Accounts: accountService,
-        Cards: new CardService(cardRepository, userRepository, accountRepository, hasher),
-        Transactions: transactionService,
-        Credits: new CreditService(creditRepository, accountService),
-        Tickets: new TicketService(ticketRepository));
-
-    DataSeeder.Seed(userRepository, hasher);
+    collection.AddSingleton<ISessionService, SessionService>(); // debe ser singleton: guarda las sesiones en memoria
+    collection.AddSingleton<ITransactionService, TransactionService>();
+    collection.AddSingleton<IAccountService, AccountService>();
+    collection.AddSingleton<IAuthService, AuthService>();
+    collection.AddSingleton<IUserService, UserService>();
+    collection.AddSingleton<ICardService, CardService>();
+    collection.AddSingleton<ICreditService, CreditService>();
+    collection.AddSingleton<ITicketService, TicketService>();
 
     // --- Interfaz de consola ---
-    new MainMenu(services).Run();
+    collection.AddSingleton<AppServices>();
+    collection.AddSingleton<MainMenu>();
+
+    using var provider = collection.BuildServiceProvider(new ServiceProviderOptions
+    {
+        ValidateOnBuild = true, // si falta registrar algo, falla al arrancar y no en mitad de una operación
+        ValidateScopes = true
+    });
+
+    DataSeeder.Seed(provider.GetRequiredService<IUserRepository>(), provider.GetRequiredService<IPasswordHasher>());
+    provider.GetRequiredService<MainMenu>().Run();
 }
 catch (Exception ex)
 {

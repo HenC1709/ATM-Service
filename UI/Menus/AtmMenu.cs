@@ -8,7 +8,7 @@ namespace ATM2.UI.Menus
     /// <summary>Operaciones del cajero con una tarjeta insertada y PIN validado.</summary>
     public class AtmMenu : SessionMenu
     {
-        private static readonly decimal[] QuickAmounts = { 500m, 1_000m, 2_000m, 5_000m };
+        private static readonly decimal[] QuickAmounts = AtmSettings.QuickWithdrawalAmounts;
         private readonly Card _card;
 
         public AtmMenu(AppServices services, Session session, User user, Card card) : base(services, session, user)
@@ -61,7 +61,7 @@ namespace ATM2.UI.Menus
             ConsoleHelper.Section("RETIRO DE EFECTIVO");
             var options = QuickAmounts.Select(Display.Money).Append("Otro monto").ToArray();
             int choice = ConsoleHelper.ShowMenu(options, "Cancelar");
-            if (choice == 0) { ConsoleHelper.Info("Operación cancelada."); return; }
+            if (choice == 0) { ConsoleHelper.Cancelled(); return; }
 
             decimal amount;
             if (choice <= QuickAmounts.Length)
@@ -72,11 +72,11 @@ namespace ATM2.UI.Menus
             {
                 ConsoleHelper.Info($"Múltiplos de {Display.Money(AtmSettings.WithdrawalMultiple)}, máximo {Display.Money(AtmSettings.MaxWithdrawalPerTransaction)}.");
                 decimal? custom = ConsoleHelper.ReadAmount("Monto a retirar");
-                if (custom is null) { ConsoleHelper.Info("Operación cancelada."); return; }
+                if (custom is null) { ConsoleHelper.Cancelled(); return; }
                 amount = custom.Value;
             }
 
-            if (!ConsoleHelper.Confirm($"¿Retirar {Display.Money(amount)}?")) { ConsoleHelper.Info("Operación cancelada."); return; }
+            if (!ConsoleHelper.Confirm($"¿Retirar {Display.Money(amount)}?")) { ConsoleHelper.Cancelled(); return; }
 
             var transaction = Services.Accounts.Withdraw(_card.AccountId, amount, _card.Id);
             ConsoleHelper.Success("Retire su dinero.");
@@ -87,7 +87,7 @@ namespace ATM2.UI.Menus
         {
             ConsoleHelper.Section("DEPÓSITO");
             decimal? amount = ConsoleHelper.ReadAmount("Monto a depositar");
-            if (amount is null) { ConsoleHelper.Info("Operación cancelada."); return; }
+            if (amount is null) { ConsoleHelper.Cancelled(); return; }
 
             ConsoleHelper.Info("Introduzca los billetes en la ranura... (simulado)");
             var transaction = Services.Accounts.Deposit(_card.AccountId, amount.Value, _card.Id);
@@ -108,21 +108,21 @@ namespace ATM2.UI.Menus
             var credit = ConsoleHelper.SelectFromList(debts,
                 c => $"Crédito {Display.ShortId(c.Id)} - Pendiente: {Display.Money(c.RemainingBalance)}",
                 "Deuda a pagar");
-            if (credit is null) { ConsoleHelper.Info("Operación cancelada."); return; }
+            if (credit is null) { ConsoleHelper.Cancelled(); return; }
 
             Console.WriteLine();
             int mode = ConsoleHelper.ShowMenu(new[] { $"Pagar total ({Display.Money(credit.RemainingBalance)})", "Pago parcial" }, "Cancelar");
-            if (mode == 0) { ConsoleHelper.Info("Operación cancelada."); return; }
+            if (mode == 0) { ConsoleHelper.Cancelled(); return; }
 
             decimal amount = credit.RemainingBalance;
             if (mode == 2)
             {
                 decimal? partial = ConsoleHelper.ReadAmount("Monto a pagar");
-                if (partial is null) { ConsoleHelper.Info("Operación cancelada."); return; }
+                if (partial is null) { ConsoleHelper.Cancelled(); return; }
                 amount = partial.Value;
             }
 
-            if (!ConsoleHelper.Confirm($"¿Pagar {Display.Money(amount)}?")) { ConsoleHelper.Info("Operación cancelada."); return; }
+            if (!ConsoleHelper.Confirm($"¿Pagar {Display.Money(amount)}?")) { ConsoleHelper.Cancelled(); return; }
 
             var transaction = Services.Credits.Pay(credit.Id, amount, _card.Id);
             var updated = Services.Credits.GetById(credit.Id)!;
@@ -143,11 +143,11 @@ namespace ATM2.UI.Menus
                 ?? throw new AtmException("El destinatario no tiene una cuenta.");
 
             decimal? amount = ConsoleHelper.ReadAmount("Monto a transferir");
-            if (amount is null) { ConsoleHelper.Info("Operación cancelada."); return; }
+            if (amount is null) { ConsoleHelper.Cancelled(); return; }
 
             if (!ConsoleHelper.Confirm($"¿Transferir {Display.Money(amount.Value)} a {recipient.FullName}?"))
             {
-                ConsoleHelper.Info("Operación cancelada.");
+                ConsoleHelper.Cancelled();
                 return;
             }
 
@@ -158,8 +158,8 @@ namespace ATM2.UI.Menus
 
         private void ShowMovements()
         {
-            ConsoleHelper.Section("ÚLTIMOS 10 MOVIMIENTOS");
-            Display.PrintTransactions(Services.Transactions.GetByAccountId(_card.AccountId).Take(10));
+            ConsoleHelper.Section($"ÚLTIMOS {AtmSettings.MiniStatementRows} MOVIMIENTOS");
+            Display.PrintTransactions(Services.Transactions.GetByAccountId(_card.AccountId).Take(AtmSettings.MiniStatementRows));
         }
 
         private void ChangePin()

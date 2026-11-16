@@ -31,8 +31,7 @@ namespace ATM2.Application.Services
 
         public Credit Request(string userId, decimal amount)
         {
-            if (amount <= 0)
-                throw new AtmException("El monto debe ser mayor que cero.");
+            Guard.Positive(amount);
             if (amount > AtmSettings.MaxCreditAmount)
                 throw new AtmException($"El monto máximo de crédito es {AtmSettings.MaxCreditAmount:C}.");
             if (_accounts.GetByUserId(userId) is null)
@@ -88,8 +87,7 @@ namespace ATM2.Application.Services
             var credit = GetExisting(creditId);
             if (credit.Status != CreditStatus.Approved || credit.RemainingBalance <= 0)
                 throw new AtmException("Este crédito no tiene deuda pendiente.");
-            if (amount <= 0)
-                throw new AtmException("El monto debe ser mayor que cero.");
+            Guard.Positive(amount);
             if (amount > credit.RemainingBalance)
                 throw new AtmException($"El monto excede la deuda pendiente ({credit.RemainingBalance:C}).");
 
@@ -114,6 +112,6 @@ namespace ATM2.Application.Services
         private Credit GetExisting(string creditId) =>
             _credits.GetById(creditId) ?? throw new AtmException("El crédito no existe.");
 
-        private static string ShortId(string id) => id[..8].ToUpperInvariant();
+        private static string ShortId(string id) => IdFormatter.Short(id);
     }
 }
