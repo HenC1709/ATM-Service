@@ -13,6 +13,12 @@ namespace ATM2.Infrastructure.Json
             Converters = { new JsonStringEnumConverter() } // enums como texto ("Withdrawal") en vez de números
         };
 
+        // Caché del texto JSON de cada archivo. Se guarda el texto (no los objetos) para que cada lectura
+        // devuelva instancias nuevas y modificar una entidad no altere los datos hasta llamar a Update.
+        private sealed record CachedFile(string Json, DateTime LastWriteUtc);
+        private readonly Dictionary<string, CachedFile> _cache = new();
+        private readonly object _lock = new();
+
         private readonly string _basePath;
 
         public JsonService(string basePath)
@@ -23,10 +29,7 @@ namespace ATM2.Infrastructure.Json
 
         public List<T> ReadAll<T>(string fileName)
         {
-            string path = GetPath(fileName);
-            if (!File.Exists(path)) return new List<T>();
-
-            string json = File.ReadAllText(path);
+            string json = ReadText(fileName);
             if (string.IsNullOrWhiteSpace(json)) return new List<T>();
 
             try
@@ -44,10 +47,38 @@ namespace ATM2.Infrastructure.Json
         {
             string path = GetPath(fileName);
             string tempPath = path + ".tmp";
+            string json = JsonSerializer.Serialize(data, Options);
 
-            // Escritura "atómica": si el programa se cierra a mitad, el archivo original queda intacto.
-            File.WriteAllText(tempPath, JsonSerializer.Serialize(data, Options));
-            File.Move(tempPath, path, overwrite: true);
+            lock (_lock)
+            {
+                // Escritura "atómica": si el programa se cierra a mitad, el archivo original queda intacto.
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, path, overwrite: true);
+                _cache[fileName] = new CachedFile(json, File.GetLastWriteTimeUtc(path));
+            }
+        }
+
+        /// <summary>Lee el archivo solo si cambió en disco desde la última lectura/escritura.</summary>
+        private string ReadText(string fileName)
+        {
+            string path = GetPath(fileName);
+
+            lock (_lock)
+            {
+                if (!File.Exists(path))
+                {
+                    _cache.Remove(fileName);
+                    return string.Empty;
+                }
+
+                DateTime lastWrite = File.GetLastWriteTimeUtc(path);
+                if (_cache.TryGetValue(fileName, out var cached) && cached.LastWriteUtc == lastWrite)
+                    return cached.Json;
+
+                string json = File.ReadAllText(path);
+                _cache[fileName] = new CachedFile(json, lastWrite);
+                return json;
+            }
         }
 
         private string GetPath(string fileName) => Path.Combine(_basePath, fileName);

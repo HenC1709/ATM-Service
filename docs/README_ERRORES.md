@@ -90,14 +90,28 @@ Cada punto indica **dónde** estaba, **por qué** era un problema y **cómo** se
 
 **Verificación:** `dotnet build` → 0 errores, 0 advertencias. Prueba de ejecución: crédito, retiro cancelado (`Cancelled()`), "ÚLTIMOS 10 MOVIMIENTOS", "HISTORIAL (últimos 20)" y lista de usuarios con rol en español. ✅
 
-**Pendientes 🟡 detectados y no tocados** (para una tercera ronda): `<AssemblyName>` sigue siendo `ATM_2.0` (cambiarlo obliga a actualizar `launch.json`); `Program.cs` arma las dependencias con `new` en vez de `Microsoft.Extensions.DependencyInjection`; cada consulta del repositorio relee el JSON completo.
+**Pendientes 🟡 detectados en esa ronda:** `AssemblyName`, inyección de dependencias manual y relectura del JSON en cada consulta → **resueltos en la sección 8**.
+
+---
+
+## 8. Tercera ronda — últimos 3 puntos 🟡 pendientes
+
+| # | Sev. | Dónde | Problema | Solución |
+|---|------|-------|----------|----------|
+| 8.1 | 🟡 | `ATM_2.0.csproj`, `.vscode/launch.json` | El ensamblado se llamaba `ATM_2.0` (`ATM_2.0.dll`) mientras todo el código usa `ATM2`. | `<AssemblyName>ATM2</AssemblyName>` y `launch.json` apunta a `bin/Debug/net10.0/ATM2.dll`. El archivo `.csproj` conserva su nombre, así que `dotnet build/run` y `tasks.json` siguen igual. |
+| 8.2 | 🟡 | `Program.cs` | Las 20 dependencias se armaban a mano con `new ...`: había que recordar el orden y editar `Program.cs` por cada servicio nuevo. | `Microsoft.Extensions.DependencyInjection` (paquete NuGet 11.0.0): `ServiceCollection` con todo registrado como *singleton* (obligatorio para `SessionService`, que guarda las sesiones en memoria). `ValidateOnBuild = true`: si falta registrar algo, la app falla al arrancar con un mensaje claro. |
+| 8.3 | 🟡 | `JsonService` | Cada consulta (`GetById`, `GetByEmail`, ...) leía y parseaba el archivo JSON completo desde disco. | Caché del **texto** de cada archivo, invalidada cuando cambia `LastWriteTimeUtc` o al escribir. Se cachea el texto y no los objetos a propósito: cada lectura devuelve entidades nuevas, así modificar un `Account` en memoria no altera los datos hasta llamar a `Update`. Acceso protegido con `lock`. |
+
+**Verificación:** `dotnet build` → 0 errores, 0 advertencias. Ejecución de prueba con registro de 2 usuarios, tarjeta, crédito, retiro y transferencia: saldos correctos tras escrituras y lecturas (la caché se invalida bien). ✅
+
+> Con esto **todos los puntos 🟡 conocidos están resueltos** (12 originales + 6 de la ronda 2 + 3 de la ronda 3).
 
 ---
 
 ## Limitaciones conocidas (pendientes, no son bugs bloqueantes)
 
 - **Sin transacciones reales:** una transferencia hace dos escrituras en `accounts.json`. Si la app se cierra justo entre ambas, el dinero quedaría descontado de una cuenta y no sumado a la otra. Con JSON es aceptable; con una base de datos se resolvería con una transacción.
-- **Rendimiento:** cada consulta lee el archivo JSON completo. Bien para clase/pruebas; con miles de registros convendría caché o una BD (SQLite/EF Core).
+- **Rendimiento:** la caché evita releer el disco, pero cada consulta sigue deserializando la lista completa y filtrando en memoria. Bien para clase/pruebas; con miles de registros convendría una BD (SQLite/EF Core).
 - **Credenciales del admin** por defecto en `Infrastructure/Seed/DataSeeder.cs` (`admin@atm.com` / `admin123`); se pueden sobrescribir con las variables de entorno `ATM_ADMIN_EMAIL` y `ATM_ADMIN_PASSWORD` antes de la primera ejecución.
 - **No hay pruebas unitarias.** Recomendado: un proyecto xUnit para `AccountService`, `CardService` y `CreditService`.
 - **Git:** `IAccaount*.cs` se renombraron con el explorador de archivos (no con `git mv`). Al hacer `git add -A` git detecta el renombrado automáticamente.
