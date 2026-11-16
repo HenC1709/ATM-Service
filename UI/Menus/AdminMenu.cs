@@ -1,4 +1,5 @@
 using ATM2.Application;
+using ATM2.Core;
 using ATM2.Core.Enums;
 using ATM2.Core.Models;
 
@@ -45,7 +46,7 @@ namespace ATM2.UI.Menus
                 var account = Services.Accounts.GetByUserId(u.Id);
                 string balance = account is null ? "-" : Display.Money(account.Balance);
                 string status = u.IsLocked ? "BLOQUEADO" : "Activo";
-                Console.WriteLine($"  {u.FullName,-22} {u.Email,-26} {u.Role,-7} {status,-10} Saldo: {balance}");
+                Console.WriteLine($"  {u.FullName,-22} {u.Email,-26} {Display.Name(u.Role),-7} {status,-10} Saldo: {balance}");
             }
         }
 
@@ -88,7 +89,7 @@ namespace ATM2.UI.Menus
 
             var cards = Services.Cards.GetAll().ToDictionary(c => c.Id);
             Console.WriteLine();
-            Display.PrintTransactions(transactions.Take(50), t =>
+            Display.PrintTransactions(transactions.Take(AtmSettings.AuditRows), t =>
             {
                 string card = t.CardId is not null && cards.TryGetValue(t.CardId, out var c) ? Display.MaskCard(c.Number) : "sin tarjeta";
                 return $"| {UserName(t.UserId)} ({card})";

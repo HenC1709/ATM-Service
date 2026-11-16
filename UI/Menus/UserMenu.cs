@@ -146,12 +146,12 @@ namespace ATM2.UI.Menus
             Console.WriteLine();
 
             decimal? amount = ConsoleHelper.ReadAmount("Monto solicitado");
-            if (amount is null) { ConsoleHelper.Info("Operación cancelada."); return; }
+            if (amount is null) { ConsoleHelper.Cancelled(); return; }
 
             decimal total = Math.Round(amount.Value * (1 + AtmSettings.CreditInterestRate), 2);
             if (!ConsoleHelper.Confirm($"Recibirás {Display.Money(amount.Value)} y deberás pagar {Display.Money(total)}. ¿Continuar?"))
             {
-                ConsoleHelper.Info("Operación cancelada.");
+                ConsoleHelper.Cancelled();
                 return;
             }
 
@@ -180,9 +180,9 @@ namespace ATM2.UI.Menus
 
         private void ShowHistory()
         {
-            ConsoleHelper.Section("HISTORIAL DE MOVIMIENTOS (últimos 20)");
+            ConsoleHelper.Section($"HISTORIAL DE MOVIMIENTOS (últimos {AtmSettings.HistoryRows})");
             var account = GetAccount();
-            Display.PrintTransactions(Services.Transactions.GetByAccountId(account.Id).Take(20));
+            Display.PrintTransactions(Services.Transactions.GetByAccountId(account.Id).Take(AtmSettings.HistoryRows));
         }
 
         private void CreateTicket()

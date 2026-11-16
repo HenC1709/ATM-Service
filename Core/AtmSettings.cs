@@ -21,6 +21,12 @@ namespace ATM2.Core
         public const decimal MaxWithdrawalPerTransaction = 10_000m;
         public const decimal MaxDepositPerTransaction = 50_000m;
 
+        // Presentación (cuántas filas se muestran en pantalla)
+        public static readonly decimal[] QuickWithdrawalAmounts = { 500m, 1_000m, 2_000m, 5_000m };
+        public const int HistoryRows = 20;
+        public const int MiniStatementRows = 10;
+        public const int AuditRows = 50;
+
         // Créditos (deudas)
         public const decimal CreditInterestRate = 0.10m;
         public const decimal CreditAutoApprovalLimit = 10_000m;

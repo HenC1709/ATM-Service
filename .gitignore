@@ -6,5 +6,6 @@ obj/
 # Datos locales generados al ejecutar la app (usuarios, hashes, movimientos)
 Data/
 
-# Datos locales generados al ejecutar la app (usuarios, hashes, movimientos)
-Data/
+# Documentación interna / notas que no se suben al repositorio
+docs/
+Claude.md

@@ -137,6 +137,8 @@ namespace ATM2.UI
             ReadLineOrExit();
         }
 
+        public static void Cancelled() => Info("Operación cancelada.");
+
         public static void Success(string message) => WriteColored($"✔ {message}", ConsoleColor.Green);
         public static void Error(string message) => WriteColored($"✖ {message}", ConsoleColor.Red);
         public static void Warning(string message) => WriteColored($"! {message}", ConsoleColor.Yellow);

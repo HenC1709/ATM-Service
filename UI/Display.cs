@@ -17,7 +17,7 @@ namespace ATM2.UI
         public static string FormatCardNumber(string number) =>
             string.Join(' ', Enumerable.Range(0, number.Length / 4).Select(i => number.Substring(i * 4, 4)));
 
-        public static string ShortId(string id) => id[..8].ToUpperInvariant();
+        public static string ShortId(string id) => ATM2.Core.IdFormatter.Short(id);
 
         public static string Name(TransactionType type) => type switch
         {
@@ -58,6 +58,13 @@ namespace ATM2.UI
             TicketStatus.Resolved => "Resuelto",
             TicketStatus.Closed => "Cerrado",
             _ => status.ToString()
+        };
+
+        public static string Name(UserRole role) => role switch
+        {
+            UserRole.Client => "Cliente",
+            UserRole.Admin => "Admin",
+            _ => role.ToString()
         };
 
         public static string Name(AccountType type) => type switch

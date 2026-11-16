@@ -37,7 +37,7 @@ namespace ATM2.Application.Services
         public Transaction Deposit(string accountId, decimal amount, string? cardId = null,
             TransactionType type = TransactionType.Deposit, string? description = null)
         {
-            ValidatePositive(amount);
+            Guard.Positive(amount);
             if (type == TransactionType.Deposit && amount > AtmSettings.MaxDepositPerTransaction)
                 throw new AtmException($"El depósito máximo por operación es {AtmSettings.MaxDepositPerTransaction:C}.");
 
@@ -51,7 +51,7 @@ namespace ATM2.Application.Services
         public Transaction Withdraw(string accountId, decimal amount, string? cardId = null,
             TransactionType type = TransactionType.Withdrawal, string? description = null)
         {
-            ValidatePositive(amount);
+            Guard.Positive(amount);
 
             // Las reglas de billetes y límite solo aplican al retiro de efectivo, no a pagos de deuda.
             if (type == TransactionType.Withdrawal)
@@ -76,7 +76,7 @@ namespace ATM2.Application.Services
         {
             if (sourceAccountId == targetAccountId)
                 throw new AtmException("No puedes transferirte a tu propia cuenta.");
-            ValidatePositive(amount);
+            Guard.Positive(amount);
 
             var source = GetActiveAccount(sourceAccountId);
             var target = GetActiveAccount(targetAccountId);
@@ -99,12 +99,6 @@ namespace ATM2.Application.Services
             if (!account.IsActive)
                 throw new AtmException("La cuenta está inactiva.");
             return account;
-        }
-
-        private static void ValidatePositive(decimal amount)
-        {
-            if (amount <= 0)
-                throw new AtmException("El monto debe ser mayor que cero.");
         }
 
         private Transaction Record(Account account, TransactionType type, decimal amount,

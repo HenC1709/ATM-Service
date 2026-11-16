@@ -74,10 +74,30 @@ Cada punto indica **dónde** estaba, **por qué** era un problema y **cómo** se
 
 ---
 
+## 7. Segunda ronda — 6 mejoras de calidad / convención (🟡)
+
+> Los 12 puntos 🟡 originales (2.1, 2.2, 2.4–2.7, 4.7, 5.4–5.8) **ya estaban corregidos** en la primera ronda.
+> Esta ronda corrige **6 problemas 🟡 nuevos** detectados al releer el código ya refactorizado.
+
+| # | Sev. | Dónde | Problema | Solución |
+|---|------|-------|----------|----------|
+| 7.1 | 🟡 | `AccountService`, `CreditService` | La validación "el monto debe ser mayor que cero" estaba **copiada en 4 lugares** (un método privado + 2 `if` sueltos + 1 más). Si cambiaba el mensaje había que tocar todos. | Nuevo `Core/Guard.cs` con `Guard.Positive(amount)`; los servicios lo reutilizan. |
+| 7.2 | 🟡 | `CreditService.ShortId`, `Display.ShortId` | La misma lógica `id[..8].ToUpperInvariant()` duplicada en dos clases (y lanzaría excepción con un id de menos de 8 caracteres). | Nuevo `Core/IdFormatter.Short(id)`, seguro con ids cortos; ambos lo usan. |
+| 7.3 | 🟡 | `UserMenu`, `AtmMenu`, `AdminMenu` | "Números mágicos" en la UI: `Take(20)`, `Take(10)`, `Take(50)`, montos rápidos `{500, 1000, 2000, 5000}` y los títulos con "últimos 20/10" escritos a mano (podían quedar desincronizados del código). | Pasaron a `AtmSettings` (`HistoryRows`, `MiniStatementRows`, `AuditRows`, `QuickWithdrawalAmounts`) y los títulos se generan con esos valores. |
+| 7.4 | 🟡 | Menús | El texto `"Operación cancelada."` estaba repetido **9 veces**. | `ConsoleHelper.Cancelled()` en un solo sitio. |
+| 7.5 | 🟡 | `AdminMenu.ShowUsers` | El rol se mostraba en inglés crudo (`Client`/`Admin`) mientras el resto de la UI está en español y usa `Display.Name(...)`. | Nuevo `Display.Name(UserRole)` ("Cliente" / "Admin") usado en la lista de usuarios. |
+| 7.6 | 🟡 | `DataSeeder` | Las credenciales del admin eran constantes públicas (`AdminEmail`, `AdminPassword`) sin forma de cambiarlas sin recompilar. | Se leen de las variables de entorno `ATM_ADMIN_EMAIL` / `ATM_ADMIN_PASSWORD`; si no existen se usan los valores de desarrollo (`DefaultAdminEmail` / `DefaultAdminPassword`). El correo se normaliza a minúsculas. |
+
+**Verificación:** `dotnet build` → 0 errores, 0 advertencias. Prueba de ejecución: crédito, retiro cancelado (`Cancelled()`), "ÚLTIMOS 10 MOVIMIENTOS", "HISTORIAL (últimos 20)" y lista de usuarios con rol en español. ✅
+
+**Pendientes 🟡 detectados y no tocados** (para una tercera ronda): `<AssemblyName>` sigue siendo `ATM_2.0` (cambiarlo obliga a actualizar `launch.json`); `Program.cs` arma las dependencias con `new` en vez de `Microsoft.Extensions.DependencyInjection`; cada consulta del repositorio relee el JSON completo.
+
+---
+
 ## Limitaciones conocidas (pendientes, no son bugs bloqueantes)
 
 - **Sin transacciones reales:** una transferencia hace dos escrituras en `accounts.json`. Si la app se cierra justo entre ambas, el dinero quedaría descontado de una cuenta y no sumado a la otra. Con JSON es aceptable; con una base de datos se resolvería con una transacción.
 - **Rendimiento:** cada consulta lee el archivo JSON completo. Bien para clase/pruebas; con miles de registros convendría caché o una BD (SQLite/EF Core).
-- **Credenciales del admin** fijas en `Infrastructure/Seed/DataSeeder.cs` (`admin@atm.com` / `admin123`). Cámbialas si el proyecto se publica.
+- **Credenciales del admin** por defecto en `Infrastructure/Seed/DataSeeder.cs` (`admin@atm.com` / `admin123`); se pueden sobrescribir con las variables de entorno `ATM_ADMIN_EMAIL` y `ATM_ADMIN_PASSWORD` antes de la primera ejecución.
 - **No hay pruebas unitarias.** Recomendado: un proyecto xUnit para `AccountService`, `CardService` y `CreditService`.
 - **Git:** `IAccaount*.cs` se renombraron con el explorador de archivos (no con `git mv`). Al hacer `git add -A` git detecta el renombrado automáticamente.
