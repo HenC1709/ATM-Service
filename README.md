@@ -78,7 +78,6 @@ ATM2/
 │   └── Menus/                        # MainMenu, UserMenu, AtmMenu, AdminMenu, SessionMenu
 ├── Data/                             # Archivos JSON autogenerados (ignorados en Git)
 └── docs/                             # Documentación local de revisión y cambios (ignorada en Git)
-    ├── README_CAMBIOS.md
     ├── README_ERRORES.md
     └── README_VISION.md
 ```
